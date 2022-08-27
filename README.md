@@ -1,0 +1,1 @@
+# JoCalc_Dlubal_Concrete_Column
