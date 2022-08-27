@@ -1,0 +1,43 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.3.32811.315
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JoCalcDlubalClientConsoleUI", "JoCalcDlubalClientConsoleUI\JoCalcDlubalClientConsoleUI.csproj", "{7B1C08C6-7509-4965-B65C-BD400EC87FDF}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Libraries", "Libraries", "{057A5507-9486-4BBA-8E7A-B087CF55960B}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JCDXMLEditorLibrary", "JCDXMLEditorLibrary\JCDXMLEditorLibrary.csproj", "{D55288B1-13C7-4C14-81A1-B1FA20B73A61}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JCDlubalCSVForcesGeneratorLibrary", "JCDCSVEditorLibrary\JCDlubalCSVForcesGeneratorLibrary.csproj", "{B32E58CD-D15E-4059-8512-E7F6DE360540}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{7B1C08C6-7509-4965-B65C-BD400EC87FDF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7B1C08C6-7509-4965-B65C-BD400EC87FDF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7B1C08C6-7509-4965-B65C-BD400EC87FDF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7B1C08C6-7509-4965-B65C-BD400EC87FDF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D55288B1-13C7-4C14-81A1-B1FA20B73A61}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D55288B1-13C7-4C14-81A1-B1FA20B73A61}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D55288B1-13C7-4C14-81A1-B1FA20B73A61}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D55288B1-13C7-4C14-81A1-B1FA20B73A61}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B32E58CD-D15E-4059-8512-E7F6DE360540}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B32E58CD-D15E-4059-8512-E7F6DE360540}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B32E58CD-D15E-4059-8512-E7F6DE360540}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B32E58CD-D15E-4059-8512-E7F6DE360540}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{D55288B1-13C7-4C14-81A1-B1FA20B73A61} = {057A5507-9486-4BBA-8E7A-B087CF55960B}
+		{B32E58CD-D15E-4059-8512-E7F6DE360540} = {057A5507-9486-4BBA-8E7A-B087CF55960B}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {2FA46CB7-5755-43F9-9D83-077D45E1BD95}
+	EndGlobalSection
+EndGlobal
