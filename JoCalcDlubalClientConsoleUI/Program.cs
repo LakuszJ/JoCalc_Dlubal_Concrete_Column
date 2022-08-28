@@ -17,8 +17,7 @@ openAndReadModel.CleanCombinationsAtCSVFiles();
 CSVEditorAndForceGenerator fg = new CSVEditorAndForceGenerator(openAndReadModel.gIARM);
 // complete Dictionary of Key: Member --> Key: Combination --> List of single items ( Internal forces at member )
 // completeDictionaryOfMemberCombinationForces ---> dicMCF
-Dictionary<int, Dictionary<int, List<InternalForcesMemberSingleItem>>> dicMCF = fg.GenereteDicOfForcesForAllMembers(); 
-
+Dictionary<int, Dictionary<int, List<InternalForcesMemberSingleItem>>> dicMCF = fg.GenereteDicOfForcesForAllMembers();
 
 
 string dicMCFjson = JsonConvert.SerializeObject(dicMCF);
