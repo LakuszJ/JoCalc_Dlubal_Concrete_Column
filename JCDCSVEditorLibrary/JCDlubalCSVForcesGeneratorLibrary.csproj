@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿    <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
@@ -16,7 +16,7 @@
 
   <ItemGroup>
     <Reference Include="RFEMWebServiceLibrary">
-      <HintPath>..\..\..\GitHub\Dlubal_CSharp_Client\source_code\RFEMWebServiceLibrary\bin\Debug\net6.0-windows\RFEMWebServiceLibrary.dll</HintPath>
+      <HintPath>..\RFEMWebServiceLibrary.dll</HintPath>
     </Reference>
   </ItemGroup>
 
