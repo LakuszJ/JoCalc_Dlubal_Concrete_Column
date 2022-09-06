@@ -10,10 +10,12 @@ namespace JCDlubalCSVForcesGeneratorLibrary
     public class GlobalInfomationAboutReadedModel
     {
         public DateTime readTime { get;  set; }
-        public string CSVFilePath { get;  set; }
-        public Dictionary<string, string> newCombinationsCSVFileNames { get;  set; }
+        public string pathCSVFiles { get;  set; }
+        public Dictionary<string, string> combinationsCSVFileNames { get;  set; }
         public CultureInfo appicationRFEMCuluture { get;  set; }
 
         public static string specificChars = ";;;;;;;;;;;\r\n";
+
+        public string totalTimeOfEditintFiles { get; set; }
     }
 }

@@ -38,14 +38,16 @@ namespace JCDlubalCSVForcesGeneratorLibrary
                 }
             }
         }
+
         public static string RemoveStringAreaBetweenPhrases(string sourseString, string phraseStart, string phraseEnd, int startOffset = 0, int endOffset = 0)
         {
+            int indexPhraseStart = sourseString.IndexOf(phraseStart);
 
-            if (sourseString.IndexOf(phraseStart) == -1)
+            if (indexPhraseStart == -1)
             { return null; }
             else
             {
-                var indexOfStartArea = sourseString.IndexOf(phraseStart) + startOffset;
+                var indexOfStartArea = indexPhraseStart + startOffset;
 
                 if (phraseEnd == "UntilEnd")
                 {
@@ -54,8 +56,9 @@ namespace JCDlubalCSVForcesGeneratorLibrary
                 }
                 else
                 {
-                    var indexOfEndArea = sourseString.IndexOf(phraseEnd, indexOfStartArea) + endOffset;
-                    if (sourseString.IndexOf(phraseStart) == -1 || sourseString.IndexOf(phraseEnd, indexOfStartArea) == -1)
+                    int indexPhraseEnd = sourseString.IndexOf(phraseEnd, indexOfStartArea);
+                    int indexOfEndArea = indexPhraseEnd + endOffset;
+                    if (indexPhraseStart == -1 || indexPhraseEnd == -1)
                     { return null; }
                     else
                     {

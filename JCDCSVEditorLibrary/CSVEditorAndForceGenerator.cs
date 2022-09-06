@@ -2,10 +2,14 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using Newtonsoft.Json;
+using System.Resources;
+using System.Diagnostics;
+using System.Text;
 
 namespace JCDlubalCSVForcesGeneratorLibrary
 {
@@ -13,7 +17,13 @@ namespace JCDlubalCSVForcesGeneratorLibrary
     public class CSVEditorAndForceGenerator
     {
 
-        GlobalInfomationAboutReadedModel gIABRM { get; set; }
+        GlobalInfomationAboutReadedModel gIARM { get; set; }
+
+        private static string filtrName = "JC_";
+
+        ResourceManager rm = new ResourceManager("JCDlubalCSVForcesGeneratorLibrary.Resources.Strings", Assembly.GetExecutingAssembly());
+
+        private Dictionary<string, string> readedData = new Dictionary<string, string>(); 
 
         public CSVEditorAndForceGenerator(GlobalInfomationAboutReadedModel gIABRM)
         {
@@ -21,20 +31,67 @@ namespace JCDlubalCSVForcesGeneratorLibrary
 
             //string testString =
             //"{\"readTime\":\"0001-01-01T00:00:00\"," +
-            //"\"CSVFilePath\":\"C:\\\\Users\\\\ljoze\\\\source\\\\repos\\\\JoCalcDlubalClient\\\\JoCalcDlubalClientConsoleUI\\\\bin\\\\Debug\\\\net6.0\\\\CSV_Project_Data\\\\Model_1\"," +
-            //"\"newCombinationsCSVFileNames\":{\"CO1\":\"CO1_static_analysis_members_internal_forces.csv\",\"CO2\":\"CO2_static_analysis_members_internal_forces.csv\",\"CO3\":\"CO3_static_analysis_members_internal_forces.csv\",\"CO4\":\"CO4_static_analysis_members_internal_forces.csv\",\"CO5\":\"CO5_static_analysis_members_internal_forces.csv\",\"CO6\":\"CO6_static_analysis_members_internal_forces.csv\",\"CO7\":\"CO7_static_analysis_members_internal_forces.csv\"}," +
+            //"\"pathCSVFiles\":\"C:\\\\Users\\\\ljoze\\\\source\\\\repos\\\\JoCalcDlubalClient\\\\JoCalcDlubalClientConsoleUI\\\\bin\\\\Debug\\\\net6.0\\\\CSV_Project_Data\\\\Model_1\"," +
+            //"\"combinationsCSVFileNames\":{\"CO1\":\"CO1_static_analysis_members_internal_forces.csv\",\"CO2\":\"CO2_static_analysis_members_internal_forces.csv\",\"CO3\":\"CO3_static_analysis_members_internal_forces.csv\",\"CO4\":\"CO4_static_analysis_members_internal_forces.csv\",\"CO5\":\"CO5_static_analysis_members_internal_forces.csv\",\"CO6\":\"CO6_static_analysis_members_internal_forces.csv\",\"CO7\":\"CO7_static_analysis_members_internal_forces.csv\"}," +
             //"\"appicationRFEMCuluture\":\"en-GB\"}"
             //;
 
-            //this.gIABRM = JsonConvert.DeserializeObject<GlobalInfomationAboutReadedModel>(testString); // change for jsonPath
+            //this.gIARM = JsonConvert.DeserializeObject<GlobalInfomationAboutReadedModel>(testString); // change for jsonPath
             ////
 
-
-            this.gIABRM = gIABRM;
+            this.gIARM = gIABRM;
         }
 
-        private static string filtrName = "JC_";
+        public void CleanCombinationsFilesAtCSVFiles()
+        {
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start() ;
 
+            string specificChars = GlobalInfomationAboutReadedModel.specificChars;
+
+            foreach (var file in gIARM.combinationsCSVFileNames)
+            {
+                string tempPath = gIARM.pathCSVFiles + "\\" + file.Value;
+                string readedText = null;
+                if (File.Exists(tempPath))
+                {
+                    using (StreamReader sr = new StreamReader(tempPath))
+                    {
+                        //var a = sr.BaseStream;
+
+                        readedText = sr.ReadToEnd();
+                        //StringBuilder sb = new StringBuilder(sr.ReadToEnd());
+                        
+
+                        while (readedText.Contains(rm.GetString("Extremes", gIARM.appicationRFEMCuluture)))
+                        {
+                            readedText = ToolForStringEdition.RemoveStringAreaBetweenPhrases(readedText, rm.GetString("Extremes", gIARM.appicationRFEMCuluture), specificChars);
+                        }
+
+                        while (readedText.Contains(rm.GetString("Total max/min values", gIARM.appicationRFEMCuluture)))
+                        {
+                            readedText = ToolForStringEdition.RemoveStringAreaBetweenPhrases(readedText, (rm.GetString("Total max/min values", gIARM.appicationRFEMCuluture)), "UntilEnd", 0, 1);
+                        }
+
+                        readedText = readedText.Remove(0, readedText.IndexOf(rm.GetString("Member Comment", gIARM.appicationRFEMCuluture)) + rm.GetString("Member Comment", gIARM.appicationRFEMCuluture).Length).Trim();
+                        readedText = readedText.Remove(readedText.LastIndexOf(specificChars), readedText.Length - readedText.LastIndexOf(specificChars)).Trim();
+                        //readedData.Add(file.Value, readedText);
+
+                        sr.Close();
+
+                    }
+
+                    using (StreamWriter sw = new StreamWriter(tempPath))
+                    {
+                        sw.Write(readedText);
+                        sw.Close();
+                    }
+                }
+            }
+
+            stopwatch.Stop();
+            gIARM.totalTimeOfEditintFiles = stopwatch.ElapsedMilliseconds.ToString();
+        }
 
         public Dictionary<int, Dictionary<int, List<InternalForcesMemberSingleItem>>> GenereteDicOfForcesForAllMembers()
         {
@@ -43,10 +100,10 @@ namespace JCDlubalCSVForcesGeneratorLibrary
             Dictionary<int, Dictionary<int, List<InternalForcesMemberSingleItem>>> dicOfInternalForecsForAllMembers_KeyMemberNo = new Dictionary<int, Dictionary<int, List<InternalForcesMemberSingleItem>>>();
             Dictionary<int, List<InternalForcesMemberSingleItem>> dicOfInternalForecsForSinMember_KeyCombinationNo;
 
-            foreach (var item in gIABRM.newCombinationsCSVFileNames)
+            foreach (var item in gIARM.combinationsCSVFileNames)
             {
                 int coNo = int.Parse(item.Key.Remove(0, 2));
-                string doc = ToolForManipulationFiles.ReadTxtFile(gIABRM.CSVFilePath + '/' + item.Value);
+                string doc = ToolForManipulationFiles.ReadTxtFile(gIARM.pathCSVFiles + '/' + item.Value);
                 var sSplit1 = doc.Split(specificChars);
 
                 foreach (var sSplit1Item in sSplit1)

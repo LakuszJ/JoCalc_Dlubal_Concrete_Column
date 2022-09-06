@@ -22,11 +22,14 @@ namespace JCDlubalCSVForcesGeneratorLibrary
     {
         public GlobalInfomationAboutReadedModel gIARM = new GlobalInfomationAboutReadedModel();
         public Dictionary<int, MyMember> members = new Dictionary<int, MyMember>();
-
+        public Dictionary<int, Tuple<DesignSituation, string>> dicCombinations = new Dictionary<int, Tuple<DesignSituation, string>>();
 
         ResourceManager rm = new ResourceManager("JCDlubalCSVForcesGeneratorLibrary.Resources.Strings", Assembly.GetExecutingAssembly());
 
         internal static EndpointAddress Address { get; set; } = new EndpointAddress("http://localhost:8081");
+
+        string CurrentDirectory = Directory.GetCurrentDirectory();
+
 
         internal static BasicHttpBinding Binding
         {
@@ -45,18 +48,17 @@ namespace JCDlubalCSVForcesGeneratorLibrary
 
         internal static ApplicationClient application;
 
-        public void MakeConnectionAndGenerateDataFiles()
+        public void SetConnectionAndGetDataFiles()
         {
             var config = new NLog.Config.LoggingConfiguration();
             var logconsole = new NLog.Targets.ConsoleTarget("logconsole");
             config.AddRule(LogLevel.Info, LogLevel.Fatal, logconsole);
             LogManager.Configuration = config;
             var logger = LogManager.GetCurrentClassLogger();
-            string CurrentDirectory = Directory.GetCurrentDirectory();
 
             try
             {
-                application_information ApplicationInfo;
+                application_information applicationInfo;
                 try
                 {
                     application = new ApplicationClient(Binding, Address);
@@ -81,66 +83,30 @@ namespace JCDlubalCSVForcesGeneratorLibrary
                 }
                 finally
                 {
-                    ApplicationInfo = application.get_information();
-                    logger.Info("Name: {0}, Version:{1}, Type: {2}, language: {3} ", ApplicationInfo.name, ApplicationInfo.version, ApplicationInfo.type, ApplicationInfo.language_name);
-                    Console.WriteLine("Name: {0}, Version:{1}, Type: {2}, language: {3} ", ApplicationInfo.name, ApplicationInfo.version, ApplicationInfo.type, ApplicationInfo.language_name);
+                    applicationInfo = application.get_information();
+                    logger.Info("Name: {0}, Version:{1}, Type: {2}, language: {3} ", applicationInfo.name, applicationInfo.version, applicationInfo.type, applicationInfo.language_name);
+                    Console.WriteLine("Name: {0}, Version:{1}, Type: {2}, language: {3} ", applicationInfo.name, applicationInfo.version, applicationInfo.type, applicationInfo.language_name);
                 }
 
-                switch (ApplicationInfo.language_name)
-                {
-                    case "English":
-                        gIARM.appicationRFEMCuluture = new CultureInfo("en-GB");
-                        break;
-                    case "Polski":
-                        gIARM.appicationRFEMCuluture = new CultureInfo("pl-PL");
-                        break;
-                    case "Deutsch":
-                        gIARM.appicationRFEMCuluture = new CultureInfo("de-DE");
-                        break;
-                }
 
-                gIARM.readTime = DateTime.Now;
+
 
                 string modelUrl = application.get_active_model();
                 ModelClient model = new ModelClient(Binding, new EndpointAddress(modelUrl));
 
-                string[] modelNames = application.get_model_list();
-                string modelName = "";
-
-                for (int i = 0; i < modelNames.Length; i++)
+                if (Directory.Exists(CurrentDirectory + @"\CSV_Project_Data"))
                 {
-                    string tempModelUrl = application.get_model(i);
-                    if (tempModelUrl == modelUrl)
-                    {
-                        modelName = modelNames[i];
-                        break;
-                    }
+                    Directory.Delete(CurrentDirectory + @"\CSV_Project_Data", true);
                 }
-
                 model.export_result_tables_with_detailed_members_results_to_csv(CurrentDirectory + @"\CSV_Project_Data");
-                //string         gIARM.CSVFilePath = File.ReadAllText(CurrentDirectory + @"\Test.xml" + $"\\{projectName}");
-                gIARM.CSVFilePath = CurrentDirectory + @"\CSV_Project_Data" + $"\\{modelName}";
-                var fileNames = Directory.GetFiles(gIARM.CSVFilePath);
-                for (int i = 0; i < fileNames.Length; i++)
-                {
-                    fileNames[i] = fileNames[i].Substring(fileNames[i].LastIndexOf('\\') + 1);
-                }
 
-                gIARM.newCombinationsCSVFileNames = new Dictionary<string, string>();
+                //model.export_result_tables_to_xml(CurrentDirectory + @"\XML_Project_Data");
 
-                foreach (string fileName in fileNames)
-                {
-                    if (fileName.EndsWith(rm.GetString("static_analysis_members_internal_forces.csv", gIARM.appicationRFEMCuluture)) & fileName.StartsWith(rm.GetString("CO", gIARM.appicationRFEMCuluture)))
-                    {
-                        string coNo = fileName.Remove(fileName.IndexOf('_'));
-                        gIARM.newCombinationsCSVFileNames.Add(coNo, fileName);
-                    }
-                }
 
-              
-
-                // ANOTHER METHOD THAT SHOUD OPERATE ON "model"
+                //ANOTHER METHOD THAT SHOUD OPERATE ON "model"
+                SetGIARM();
                 GetMembersAndCorrectDirection(model);
+                GetCombinationList(model);
 
 
             }
@@ -151,7 +117,72 @@ namespace JCDlubalCSVForcesGeneratorLibrary
             }
         }
 
-        public void GetMembersAndCorrectDirection(ModelClient model)
+        public void GetCombinationList(ModelClient model)
+        {
+            foreach (var item in gIARM.combinationsCSVFileNames)
+            {
+                int coNo = int.Parse(item.Key.Remove(0, 2));
+                DesignSituation tempCombinationDesignSituation = (DesignSituation)model.get_load_combination(coNo).design_situation;
+                string tempcCombinationName = model.get_action_combination(coNo).name;
+                Tuple<DesignSituation, string> tuple = new Tuple<DesignSituation, string>(tempCombinationDesignSituation, tempcCombinationName);
+                dicCombinations.Add(coNo, tuple);
+            }
+        }
+
+        private void SetGIARM()
+        {
+
+            application_information applicationInfo = application.get_information();
+
+            switch (applicationInfo.language_name)
+            {
+                case "English":
+                    gIARM.appicationRFEMCuluture = new CultureInfo("en-GB");
+                    break;
+                case "Polski":
+                    gIARM.appicationRFEMCuluture = new CultureInfo("pl-PL");
+                    break;
+                case "Deutsch":
+                    gIARM.appicationRFEMCuluture = new CultureInfo("de-DE");
+                    break;
+            }
+
+            gIARM.readTime = DateTime.Now;
+
+            string modelUrl = application.get_active_model();
+            string[] modelNames = application.get_model_list();
+            string modelName = "";
+            for (int i = 0; i < modelNames.Length; i++)
+            {
+                string tempModelUrl = application.get_model(i);
+                if (tempModelUrl == modelUrl)
+                {
+                    modelName = modelNames[i];
+                    break;
+                }
+            }
+
+            gIARM.pathCSVFiles = CurrentDirectory + @"\CSV_Project_Data" + $"\\{modelName}";
+            var fileNames = Directory.GetFiles(gIARM.pathCSVFiles);
+            for (int i = 0; i < fileNames.Length; i++)
+            {
+                fileNames[i] = fileNames[i].Substring(fileNames[i].LastIndexOf('\\') + 1);
+            }
+
+            gIARM.combinationsCSVFileNames = new Dictionary<string, string>();
+
+            foreach (string fileName in fileNames)
+            {
+                if (fileName.EndsWith(rm.GetString("static_analysis_members_internal_forces.csv", gIARM.appicationRFEMCuluture)) & fileName.StartsWith(rm.GetString("CO", gIARM.appicationRFEMCuluture)))
+                {
+                    string coNo = fileName.Remove(fileName.IndexOf('_'));
+                    gIARM.combinationsCSVFileNames.Add(coNo, fileName);
+                }
+            }
+
+        }
+
+        private void GetMembersAndCorrectDirection(ModelClient model)
         {
             int[] allObjectsNumber = model.get_all_object_numbers(object_types.E_OBJECT_TYPE_MEMBER, 1);
 
@@ -221,9 +252,9 @@ namespace JCDlubalCSVForcesGeneratorLibrary
 
                 }
 
-                mem.memberVector.x = Math.Round(tempBootomNodeForMemberCoordinate.x - tempTopNodeForMemberCoordinate.x, 3);
-                mem.memberVector.y = Math.Round(tempBootomNodeForMemberCoordinate.y - tempTopNodeForMemberCoordinate.y, 3);
-                mem.memberVector.z = Math.Round(Math.Abs(tempTopNodeForMemberCoordinate.z - tempBootomNodeForMemberCoordinate.z), 3);
+                mem.memberVectorX = Math.Round(tempBootomNodeForMemberCoordinate.x - tempTopNodeForMemberCoordinate.x, 3);
+                mem.memberVectorY= Math.Round(tempBootomNodeForMemberCoordinate.y - tempTopNodeForMemberCoordinate.y, 3);
+                mem.memberVectorZ = Math.Round(Math.Abs(tempTopNodeForMemberCoordinate.z - tempBootomNodeForMemberCoordinate.z), 3);
 
                 mem.memberLength = (decimal)Math.Round(tempMember.length, 3);
 
@@ -244,50 +275,12 @@ namespace JCDlubalCSVForcesGeneratorLibrary
                     string error = "Lack of section defintion for member"; // some exception
                 }
 
-                members.Add(mem.memberlNo , mem);
+                members.Add(mem.memberlNo, mem);
 
             }
         }
 
-        public void CleanCombinationsAtCSVFiles()
-        {
-            foreach (var file in gIARM.newCombinationsCSVFileNames)
-            {
-                string tempPath = gIARM.CSVFilePath + "\\" + file.Value;
-                string readedText = null;
-                if (File.Exists(tempPath))
-                {
-                    using (StreamReader sr = new StreamReader(tempPath))
-                    {
-                        var a = sr.BaseStream;
 
-                        readedText = sr.ReadToEnd();
-
-                        string specificChars = GlobalInfomationAboutReadedModel.specificChars;
-
-                        while (readedText.Contains(rm.GetString("Extremes", gIARM.appicationRFEMCuluture)))
-                        {
-                            readedText = ToolForStringEdition.RemoveStringAreaBetweenPhrases(readedText, rm.GetString("Extremes", gIARM.appicationRFEMCuluture), specificChars);
-                        }
-
-                        while (readedText.Contains(rm.GetString("Total max/min values", gIARM.appicationRFEMCuluture)))
-                        {
-                            readedText = ToolForStringEdition.RemoveStringAreaBetweenPhrases(readedText, (rm.GetString("Total max/min values", gIARM.appicationRFEMCuluture)), "UntilEnd", 0, 1);
-                        }
-
-                        readedText = readedText.Remove(0, readedText.IndexOf(rm.GetString("Member Comment", gIARM.appicationRFEMCuluture)) + rm.GetString("Member Comment", gIARM.appicationRFEMCuluture).Length).Trim();
-                        readedText = readedText.Remove(readedText.LastIndexOf(specificChars), readedText.Length - readedText.LastIndexOf(specificChars)).Trim();
-                        sr.Close();
-                    }
-
-                    using (StreamWriter sw = new StreamWriter(tempPath))
-                    {
-                        sw.Write(readedText);
-                        sw.Close();
-                    }
-                }
-            }
-        }
     }
 }
 
